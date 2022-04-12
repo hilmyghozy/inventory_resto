@@ -54,8 +54,11 @@ $segment = request()->segments();
     <ul class="dropdown-menu" style="display: none;">
       <li><a class="nav-link" href="{{ url('pos/store') }}">Store</a></a></li>
       <li><a class="nav-link" href="{{ url('pos/kategori') }}">Kategori</a></a></li>
+      <li><a class="nav-link" href="{{ url('pos/kategori/additional-menu') }}">Additional Menu</a></a></li>
       <li><a class="nav-link" href="{{ url('pos/item-group') }}">Item Group</a></a></li>
       <li><a class="nav-link" href="{{ url('pos/item') }}">Item</a></a></li>
+      <li><a class="nav-link" href="{{ url('pos/item-size') }}">Item Size</a></a></li>
+      <li><a class="nav-link" href="{{ url('pos/item-type') }}">Item Type</a></a></li>
       <li><a class="nav-link" href="{{ url('pos/paket') }}">Paket</a></a></li>
       <li><a class="nav-link" href="{{ url('pos/discount') }}">Discount</a></a></li>
       <li><a class="nav-link" href="{{ url('pos/payment') }}">Payment Type</a></a></li>

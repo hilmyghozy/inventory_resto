@@ -217,9 +217,13 @@ class POS_ProductPaketController extends Controller
         $dataitem = DB::table('pos_product_item')
             ->select('id_item', 'nama_item')
             ->whereIn('id_item', $request->opsi_menu)->get();
+        $id_paket_detail = 1;
+        $product_paket_detail = DB::table('pos_product_paket_detail')->latest('id_paket_detail')->first();
+        if ($product_paket_detail) $id_paket_detail = $product_paket_detail->id_paket_detail + 1;
 
         DB::table('pos_product_paket_detail')->insert(
             [
+                'id_paket_detail' => $id_paket_detail,
                 'id_paket' => $id,
                 'nama_paket_detail' => $request->nama_paket_detail,
                 'id_kategori' => 0,

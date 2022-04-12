@@ -87,12 +87,33 @@ Route::get('pos/kategori/pagination/{id}', 'POS_ProductKategoriController@pagina
 // Route::get('pos/kategori', 'POS_ProductKategoriController@show');
 Route::get('pos/kategori/table', 'POS_ProductKategoriController@table');
 
+Route::get('pos/kategori/additional-menu', 'POS_ProductKategoriAdditionalMenu@index');
+Route::post('pos/kategori/additional-menu', 'POS_ProductKategoriAdditionalMenu@create');
+Route::get('pos/kategori/additional-menu/{id}', 'POS_ProductKategoriAdditionalMenu@edit');
+Route::post('pos/kategori/update-additional-menu', 'POS_ProductKategoriAdditionalMenu@update');
+Route::delete('pos/kategori/delete-additional-menu/{id}', 'POS_ProductKategoriAdditionalMenu@destroy');
+
 //Controller Item
 Route::get('pos/item', 'POS_ProductItemController@index');
 Route::get('pos/item/edit/{id}', 'POS_ProductItemController@edit');
 Route::post('pos/item/add', 'POS_ProductItemController@create');
 Route::post('pos/item/updateProcess', 'POS_ProductItemController@update');
 Route::delete('pos/item/destroy/{id}', 'POS_ProductItemController@destroy');
+
+// Controller Item Size
+Route::get('pos/item-size', 'POS_ProductItemSizeController@index');
+Route::post('pos/item-size', 'POS_ProductItemSizeController@create');
+Route::get('pos/item-size/edit/{id}', 'POS_ProductItemSizeController@edit');
+Route::put('pos/item-size', 'POS_ProductItemSizeController@update');
+Route::delete('pos/item-size/{id}', 'POS_ProductItemSizeController@destroy');
+
+// Controller Item Type
+Route::get('pos/item-type', 'POS_ProductItemTypeController@index');
+Route::get('pos/item-type/item/{id_item}', 'POS_ProductItemTypeController@getProductItemType');
+Route::post('pos/item-type', 'POS_ProductItemTypeController@create');
+Route::get('pos/item-type/edit/{id}', 'POS_ProductItemTypeController@edit');
+Route::put('pos/item-type', 'POS_ProductItemTypeController@update');
+Route::delete('pos/item-type/{id}', 'POS_ProductItemTypeController@destroy');
 
 
 //Controller Item

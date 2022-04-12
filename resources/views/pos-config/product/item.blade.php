@@ -63,17 +63,24 @@
                                 <div class="row">
                                   <div class="col-md-4 mb-3">
                                     <label for="validationDefault08">Third Party </label><small> (Nominal)</small>
-                                    <input type="number" class="form-control" oninput="updateThirdParty()" id="validationDefault08" placeholder="ThirdParty" value="0" required>
+                                    <input type="number" class="form-control" oninput="updateThirdParty()" id="validationDefault08" placeholder="ThirdParty" value="0" name="harga_thirdparty" required>
                                   </div>
                                 <div class="col-md-4 mb-3">
                                   <label for="validationDefault10">Pajak Third Party</label><small> (Nominal)</small>
-                                  <input type="number" class="form-control" oninput="updatePajakTP()" id="validationDefault10" placeholder="Pajak Third Party" value="0" required>
+                                  <input type="number" class="form-control" oninput="updatePajakTP()" id="validationDefault10" placeholder="Pajak Third Party" value="0" name="pajak_thirdparty" required>
                                 </div>
                                   <div class="col-md-4 mb-3">
                                     <label for="validationDefault09">Harga Third Party</label>
                                     <input type="text" class="form-control" id="validationDefault09" value="0" name="thirdparty" readonly>
                                   </div>
                                 </div>
+                              </div>
+                              <div class="col-md-12 item-types">
+                              </div>
+                              <div class="col-md-12 my-2">
+                                <button type="button" class="btn btn-outline-primary" onclick="tambahItemType()">
+                                  Tambah Item Type <span aria-hidden="true"><i class="fas fa-plus"></i></span>
+                                </button>
                               </div>
                             </div>
                 
@@ -238,6 +245,181 @@
       totalthidparty = third + pajaktp;
       $('#validationDefault09').val(totalthidparty);
   }
-  
+  function updateHargaItemSize () {
+    $('input[name*="harga_item_size"]').on('input', function (change) {
+      var pajak = $(this).parent().parent().find('input[name*="pajak_item_size"]').val()
+      var harga = change.target.valueAsNumber
+      var harga_jual = Number(pajak) + harga
+      $(this).parent().parent().find('input[name*="harga_jual_item_size"]').val(harga_jual)
+    })
+    $('input[name*="pajak_item_size"]').on('input', function (change) {
+      var harga = $(this).parent().parent().find('input[name*="harga_item_size"]').val()
+      var pajak = change.target.valueAsNumber
+      var harga_jual = pajak + Number(harga)
+      $(this).parent().parent().find('input[name*="harga_jual_item_size"]').val(harga_jual)
+    })
+    $('input[name*="harga_thirdparty_item_size"]').on('input', function (change) {
+      var pajak = $(this).parent().parent().find('input[name*="pajak_thirdparty_item_size"]').val()
+      var harga = change.target.valueAsNumber
+      var harga_jual = Number(pajak) + harga
+      $(this).parent().parent().find('input[name*="harga_jual_thirdparty_item_size"]').val(harga_jual)
+    })
+    $('input[name*="pajak_thirdparty_item_size"]').on('input', function (change) {
+      var harga = $(this).parent().parent().find('input[name*="harga_thirdparty_item_size"]').val()
+      var pajak = change.target.valueAsNumber
+      var harga_jual = pajak + Number(harga)
+      $(this).parent().parent().find('input[name*="harga_jual_thirdparty_item_size"]').val(harga_jual)
+    })
+  }
+  var item_types = []
+  function tambahItemType() {
+    var item_type = item_types.length
+    var item_size = 0
+    if (item_types.length > 0) {
+      item_type = item_types[item_type - 1].item_type + 1
+    }
+    var data_item_type = {
+      item_type: item_type,
+      item_sizes: [
+        {
+          item_size: item_size
+        }
+      ]
+    }
+    item_types.push(data_item_type)
+    $('div.item-types').append(templateItemType(data_item_type.item_type, item_size))
+    updateHargaItemSize()
+  }
+
+  function hapusItemType(item_type) {
+    $(`div.item-type-${item_type}`).remove()
+    $(`div.item-sizes-${item_type}`).remove()
+  }
+
+  function templateItemType (item_type, item_size) {
+    return `
+      <div class="row item-type-${item_type}">
+        <div class="col-md-8 mb-3">
+          <label for="nama_item_type${item_type}">Item Type </label>
+          <input type="text" id="nama_item_type${item_type}" class="form-control" placeholder="Nama Item Type" name="nama_item_type[${item_type}]" required>
+        </div>
+        <div class="col-md-4 mb-3 align-self-end">
+          <div class="btn-group" role="group" aria-label="Basic example">
+            <button type="button" class="btn btn-outline-primary" onclick="tambahItemType()">
+              Tambah Item Type <span aria-hidden="true"><i class="fas fa-plus"></i></span>
+            </button>
+            <button type="button" class="btn btn-danger" onclick="hapusItemType(${item_type})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="item-sizes-${item_type}">
+        ${templateItemSize(item_type, item_size)}
+      </div>
+    `
+  }
+
+  function tambahItemSize(item_type) {
+    let type = item_types.filter( function (value, index) {
+      return value.item_type == item_type
+    })
+    let item_sizes = type[0].item_sizes
+    let item_size = item_sizes.length
+    item_types = item_types.map( function (value) {
+      if (value.item_type == item_type) {
+        let data_item_size = {
+          item_size: item_size
+        }
+        value.item_sizes.push(data_item_size)
+      }
+      return value
+    })
+    $(`div.item-sizes-${item_type}`).append(templateItemSize(type[0].item_type, item_size))
+    updateHargaItemSize()
+  }
+
+  function hapusItemSize(item_type, item_size) {
+    $(`div.item-size-${item_type}-${item_size}`).remove()
+  }
+
+  var item_sizes = 0
+  $('#btnTambahItemSize').on('click', function () {
+    item_sizes += 1;
+    $('.item-sizes').append(templateItemSize(item_sizes))
+  })
+
+  function templateItemSize (item_type, item_size) {
+    return `
+      <div class="item-size-${item_type}-${item_size}">
+        <div class="row">
+          <div class="col-8 mb-3">
+            <label for="nama_item_size${item_size}">Item Size</label>
+            <input type="text" class="form-control" placeholder="Nama Item Size" aria-label="Nama Item Size" aria-describedby="basic-addon2" id="nama_item_size${item_size}" name="nama_item_size[${item_type}][]">
+          </div>
+          <div class="col-4 mb-3 align-self-end">
+            <button type="button" class="btn btn-outline-primary" onclick="tambahItemSize(${item_type})">
+              Tambah Item Size <span aria-hidden="true"><i class="fas fa-plus"></i></span>
+            </button>
+            <button type="button" class="btn btn-danger" onclick="hapusItemSize(${item_type},${item_size})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="harga_item_size${item_size}">Harga </label> <small> (Nominal)</small>
+            <input type="number" id="harga_item_size${item_size}" class="form-control" placeholder="Nama Item Size" name="harga_item_size[${item_type}][]" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="pajak_item_size${item_size}">Pajak</label><small> (Nominal)</small>
+            <input type="number" class="form-control" value="0" required id="pajak_item_size${item_size}" name="pajak_item_size[${item_type}][]">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="harga_jual_item_size${item_size}">Harga Jual</label><small> (Nominal)</small>
+            <input type="number" disabled class="form-control" placeholder="Harga Item Size" value="0" required id="harga_jual_item_size${item_size}" name="harga_jual_item_size[${item_type}][]">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="harga_thirdparty_item_size${item_size}">Harga </label> <small> (Nominal)</small>
+            <input type="number" id="harga_thirdparty_item_size${item_size}" class="form-control" placeholder="Nama Item Size" name="harga_thirdparty_item_size[${item_type}][]" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="pajak_thirdparty_item_size${item_size}">Pajak</label><small> (Nominal)</small>
+            <input type="number" class="form-control" value="0" required id="pajak_thirdparty_item_size${item_size}" name="pajak_thirdparty_item_size[${item_type}][]">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="harga_jual_thirdparty_item_size${item_size}">Harga Jual</label><small> (Nominal)</small>
+            <input type="number" disabled class="form-control" placeholder="Harga Item Size" value="0" required id="harga_jual_thirdparty_item_size${item_size}" name="harga_jual_thirdparty_item_size[${item_type}][]">
+          </div>
+        </div>
+      </div>
+    `
+  }
+
+  function templateItemSizess (key) {
+    return `
+      <div class="row item-type">
+        <div class="col-md-6 mb-3">
+          <label for="validationDefault_size${key}">Nama Item Size </label>
+          <input type="text" id="validationDefault_size${key}" class="form-control" placeholder="Nama Item Size" name="nama_item_size[]" required>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="validationDefault_sizePrice${key}">Harga</label><small> (Nominal)</small>
+          <input type="number" class="form-control" placeholder="Harga Item Size" value="0" required id="validationDefault_sizePrice${key}" name="harga_item_size[]">
+        </div>
+        <div class="col-md-2 mb-3 align-self-center">
+          <button type="submit" class="btn btn-danger" onClick="hapusItemSize(this)">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    `
+  }
+
+  // function hapusItemSize(event) {
+  //   $(event).parents('.item-type').remove()
+  // }
 </script>
 @endsection

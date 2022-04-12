@@ -62,6 +62,7 @@ $segments = request()->segments();
 {{-- ./MODAL Logout --}}
 
 <!-- REQUIRED SCRIPTS -->
+@yield('modals')
 @include('dashboard._partials.footer-script')
 <script>
     const btnLogout = $('#btnLogout');
