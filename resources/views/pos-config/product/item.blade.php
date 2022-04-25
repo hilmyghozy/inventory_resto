@@ -289,11 +289,13 @@
     item_types.push(data_item_type)
     $('div.item-types').append(templateItemType(data_item_type.item_type, item_size))
     updateHargaItemSize()
+    disableBaseHarga()
   }
 
   function hapusItemType(item_type) {
     $(`div.item-type-${item_type}`).remove()
     $(`div.item-sizes-${item_type}`).remove()
+    disableBaseHarga()
   }
 
   function templateItemType (item_type, item_size) {
@@ -416,6 +418,13 @@
         </div>
       </div>
     `
+  }
+
+  function disableBaseHarga () {
+    var itemTypes = $('div[class*="row item-type"]')
+    var input = 'input[name="harga"], input[name="pajak"], input[name="harga_thirdparty"], input[name="pajak_thirdparty"]'
+    $(input).prop('disabled', false)
+    if (itemTypes.length > 0) $(input).val(0).prop('disabled', true)
   }
 
   // function hapusItemSize(event) {

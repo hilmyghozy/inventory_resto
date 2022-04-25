@@ -120,9 +120,9 @@ class POS_ProductItemController extends Controller
         DB::beginTransaction();
         $item = DB::table('pos_product_item')->insertGetId([
             'id_item' => null, 'nama_item' => $request->nama_item, 
-            'harga' => $request->harga, 'id_kategori' => $request->id_kategori, 
-            'id_store' => $request->id_store, 'pajak' => $request->pajak, 
-            'harga_jual' => $request->harga_jual, 'harga_thirdparty' => $request->harga_thirdparty, 'pajak_thirdparty' => $request->pajak_thirdparty, 'thirdparty' => $request->thirdparty
+            'harga' => $request->harga ?: 0, 'id_kategori' => $request->id_kategori, 
+            'id_store' => $request->id_store, 'pajak' => $request->pajak ?: 0, 
+            'harga_jual' => $request->harga_jual ?: 0, 'harga_thirdparty' => $request->harga_thirdparty ?: 0, 'pajak_thirdparty' => $request->pajak_thirdparty ?: 0, 'thirdparty' => $request->thirdparty ?: 0
         ]);
         $data_item_type = [];
         foreach ($item_types as $type => $item_type) {
@@ -197,6 +197,7 @@ class POS_ProductItemController extends Controller
             ->select('pos_product_item.*', 'pos_product_kategori.is_paket')
             ->where('id_item', $id)->get();
         $index = 0;
+        $selected_item_opsi_menu = [];
         $dataitem = $dataitem->map(function ($item) {
             $item_types = DB::table('pos_product_item_type')->where('id_item', $item->id_item)->where('id_item_type', null)->get();
             $opsi_menu = DB::table('pos_product_item_menu')->where('id_item', $item->id_item)->get();
@@ -218,6 +219,16 @@ class POS_ProductItemController extends Controller
             $item->item_types = $item_types;
             return $item;
         });
+        foreach ($dataitem as $item) {
+            foreach ($item->opsi_menu as $opsi_menu) {
+                $item_opsi_menu_exists = collect($selected_item_opsi_menu)->where('jumlah', $opsi_menu->jumlah)->where('id_kategori', $opsi_menu->id_kategori)->first();
+                if (!$item_opsi_menu_exists) array_push($selected_item_opsi_menu, (object)[
+                    'id_kategori' => $opsi_menu->id_kategori,
+                    'jumlah' => $opsi_menu->jumlah,
+                    'opsi_menu' => collect($item->opsi_menu)->where('jumlah', $opsi_menu->jumlah)->where('id_kategori', $opsi_menu->id_kategori)->values()
+                ]);
+            }
+        }
         $datakategori = DB::table('pos_product_kategori')->get();
         $datastore = DB::table('pos_store')->get();
         if ($dataitem->count() > 0) {
@@ -239,7 +250,7 @@ class POS_ProductItemController extends Controller
                     while ($menu < count($selected_opsi_menu)) {
                         $item_selected_opsi_menu = $selected_opsi_menu[$menu];
                         if ($item_opsi_menu->id_item === $item_selected_opsi_menu->id_item_paket) {
-                            $item_opsi_menu->selected = true;
+                            // $item_opsi_menu->selected = true;
                             $menu_type = DB::table('pos_product_item_menu_type')
                                 ->join('pos_product_item_type', 'pos_product_item_type.id_type', '=', 'pos_product_item_menu_type.id_item_type')
                                 ->where([
@@ -249,7 +260,6 @@ class POS_ProductItemController extends Controller
                                     $type->nama_item = $item_opsi_menu->nama_item . "($type->nama_type)";
                                     return $type;
                                 });
-                            // if (count($menu_type) > 0) return response()->json($menu_type);
                             $item_opsi_menu->menu_type = $menu_type;
                         }
                         $menu += 1;
@@ -258,7 +268,8 @@ class POS_ProductItemController extends Controller
                 }
             }
         }
-        return view('pos-config.product.item-edit', compact (['dataitem', 'datakategori', 'datastore', 'opsi_menu']));
+        // return response()->json($selected_item_opsi_menu);
+        return view('pos-config.product.item-edit', compact (['dataitem', 'datakategori', 'datastore', 'opsi_menu', 'selected_item_opsi_menu']));
     }
 
     /**
@@ -273,6 +284,8 @@ class POS_ProductItemController extends Controller
         DB::beginTransaction();
         $opsi_menu = [];
         $input_opsi_menu = $request->input('opsi_menu') ?: [];
+        $input_jumlah_opsi_menu = $request->input('jumlah_opsi_menu') ?: [];
+        $input_kategori_opsi_menu = $request->input('kategori_opsi_menu') ?: [];
         $paket_item_menu = $request->input('paket_item_menu') ?: [];
         
         $delete_item_types = $request->input('delete_item_types') ?: [];
@@ -326,27 +339,32 @@ class POS_ProductItemController extends Controller
                 }
             }
         }
-        // return response()->json([$input_opsi_menu, $paket_item_menu]);
+        // return response()->json($request->all());
         DB::table('pos_product_item_type')->whereIn('id_type', $delete_item_types)->delete();
         if ($request->input('opsi_menu')) {
             DB::table('pos_product_item_menu')->where('id_item', $request->id_item)->delete();
-            foreach ($input_opsi_menu as $item) {
-                $id_pos_product_item_opsi_menu = DB::table('pos_product_item_menu')->insertGetId([
-                    'id_item' => $request->id_item,
-                    'id_item_paket' => $item
-                ]);
-                DB::table('pos_product_item_menu_type')->where([
-                    'id_item' => $request->id_item,
-                    'id_item_paket' => $item
-                ])->delete();
-                if (isset($paket_item_menu[$item])) {
-                    foreach ($paket_item_menu[$item] as $available_menu) {
-                        DB::table('pos_product_item_menu_type')->insert([
-                            'id_item' => $request->id_item,
-                            'id_item_paket' => $item,
-                            'id_pos_product_item_opsi_menu' => $id_pos_product_item_opsi_menu,
-                            'id_item_type' => $available_menu
-                        ]);
+            DB::table('pos_product_item_menu_type')->where([
+                'id_item' => $request->id_item
+            ])->delete();
+            foreach ($input_opsi_menu as $key => $item) {
+                foreach ($item as $id_menu) {
+                    $jumlah_opsi_menu = $input_jumlah_opsi_menu[$key][0];
+                    $kategori_opsi_menu = $input_kategori_opsi_menu[$key][0];
+                    $id_pos_product_item_opsi_menu = DB::table('pos_product_item_menu')->insertGetId([
+                        'id_item' => $request->id_item,
+                        'id_item_paket' => $id_menu,
+                        'jumlah' => $jumlah_opsi_menu,
+                        'id_kategori' => $kategori_opsi_menu
+                    ]);
+                    if (isset($paket_item_menu[$id_menu])) {
+                        foreach ($paket_item_menu[$id_menu] as $available_menu) {
+                            DB::table('pos_product_item_menu_type')->insert([
+                                'id_item' => $request->id_item,
+                                'id_item_paket' => $id_menu,
+                                'id_pos_product_item_opsi_menu' => $id_pos_product_item_opsi_menu,
+                                'id_item_type' => $available_menu
+                            ]);
+                        }
                     }
                 }
             }
@@ -354,8 +372,8 @@ class POS_ProductItemController extends Controller
         DB::table('pos_product_item')
               ->where('id_item', $request->id_item)
               ->update(['nama_item' => $request->nama_item, 'id_kategori' => $request->id_kategori,
-              'id_store' => $request->id_store, 'harga' => $request->harga, 'pajak' => $request->pajak,
-              'harga_jual' => $request->harga_jual, 'harga_thirdparty' => $request->harga_thirdparty, 'pajak_thirdparty' => $request->pajak_thirdparty, 'thirdparty' => $request->thirdparty,
+              'id_store' => $request->id_store, 'harga' => $request->harga ?: 0, 'pajak' => $request->pajak ?: 0,
+              'harga_jual' => $request->harga_jual ?: 0, 'harga_thirdparty' => $request->harga_thirdparty ?: 0, 'pajak_thirdparty' => $request->pajak_thirdparty ?: 0, 'thirdparty' => $request->thirdparty ?: 0,
               'has_type' => $request->has_type, 'has_size' => $request->has_size]);
         DB::commit();
         return redirect('pos/item')->with('status1', 'Item Berhasil Diperbarui');

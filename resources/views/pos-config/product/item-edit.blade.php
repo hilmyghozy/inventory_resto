@@ -290,6 +290,7 @@
         })
       })
       updateHargaItemSize()
+      disableBaseHarga()
     })
   })
   function updateHargaItemSize () {
@@ -350,6 +351,7 @@
         $(`div.item-sizes-${type.id_type}`).append(templateItemSize(id_item, type, item_size))
       })
       updateHargaItemSize()
+      disableBaseHarga()
     }
   }
   function tambahItemSize (id_item, id_type) {
@@ -405,6 +407,7 @@
     })
     $(`div.item-type-${item_type}`).remove()
     $(`div.item-sizes-${item_type}`).remove()
+    disableBaseHarga()
   }
   function hapusItemSize(item_type, item_size) {
     var id_item = dataitem[0].id_item
@@ -505,15 +508,21 @@
   function hiddenInput(name, value) {
     return `<input type="hidden" name="${name}" value="${value}">`
   }
+  function disableBaseHarga () {
+    var itemTypes = $('div[class*="row item-type"]')
+    var input = 'input[name="harga"], input[name="pajak"], input[name="harga_thirdparty"], input[name="pajak_thirdparty"]'
+    $(input).prop('disabled', false)
+    if (itemTypes.length > 0) $(input).val(0).prop('disabled', true)
+  }
 </script>
 @endif
 
-@if($item->is_paket)
+@if($dataitem[0]->is_paket)
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script type="text/javascript">
   var opsi_menu = {!! $opsi_menu !!}
   var kategori = {!! $datakategori !!}
-  var selected_kategori = []  
+  var selected_item_opsi_menu = {!! json_encode($selected_item_opsi_menu) !!}
   var jumlahKategoriOpsiMenu = 0
   $(document).ready(function () {
     for (let index = 0; index < kategori.length; index++) {
@@ -528,22 +537,19 @@
       menu_item.id = menu_item.id_item
       menu_item.text = menu_item.nama_item
       menu_item.selected = menu_item.selected
-      if (menu_item.selected == true) {
-        selected_kategori = selected_kategori.filter ( function (select) {
-          return select != menu_item.id_kategori
-        })
-        selected_kategori.push(menu_item.id_kategori)
-      }
       menu += 1;
     }
-    jumlahKategoriOpsiMenu = selected_kategori.length
+    jumlahKategoriOpsiMenu = selected_item_opsi_menu.length
     for (let index = 0; index < jumlahKategoriOpsiMenu; index++) {
       var elements = kategori.map(function (map) {
         map.selected = false
-        if (map.id == selected_kategori[index]) map.selected = true
+        if (map.id == selected_item_opsi_menu[index].id_kategori) {
+          map.selected = true
+          map.item = selected_item_opsi_menu[index].opsi_menu
+        }
         return map;
       })
-      initiateOpsiMenu((index + 1), elements)
+      initiateOpsiMenu((index + 1), elements, selected_item_opsi_menu[index].jumlah)
     }
   })
   $('.kategori-opsi-menu').select2({
@@ -552,29 +558,35 @@
   });
   $('#btnAddOpsiMenu').on('click', function (event) {
     jumlahKategoriOpsiMenu += 1
+    kategori = kategori.map(function(map) {
+      map.selected = false;
+      return map;
+    })
     initiateOpsiMenu(jumlahKategoriOpsiMenu, kategori)
   })
 
-  function initiateOpsiMenu (jumlahOpsiMenu, datakategori = []) {
+  function initiateOpsiMenu (jumlahOpsiMenu, datakategori = [], jumlahSelectedAvailableOpsiMenu = 1) {
     var selectedKategori = datakategori.filter( function (kategori) {
       return kategori.selected == true;
     })
     var options = {
       placeholder: 'Pilih Opsi Menu',
       data: [],
-      maximumSelectionLength: 0
     }
-    var jumlahSelectedAvailableOpsiMenu = 0
+    
     if (selectedKategori.length > 0) {
       selectedKategori = selectedKategori[0]
       var availableOpsiMenu = opsi_menu.filter(function (menu) {
         return menu.id_kategori == selectedKategori.id_kategori
       })
+      availableOpsiMenu = availableOpsiMenu.map(function (menu) {
+        for (let index = 0; index < selectedKategori.item.length; index++) {
+          const element = selectedKategori.item[index];
+          if (element.id_item_paket == menu.id_item) menu.selected = true
+        }
+        return menu;
+      })
       options.data = availableOpsiMenu
-      jumlahSelectedAvailableOpsiMenu = availableOpsiMenu.filter(function (filter) {
-        return filter.selected == true
-      }).length
-      options.maximumSelectionLength = jumlahSelectedAvailableOpsiMenu
     }
     $('#opsiMenus').append(templateOpsiMenu(jumlahOpsiMenu, jumlahSelectedAvailableOpsiMenu));
     // Datatable
@@ -588,22 +600,6 @@
     });
     
     var opsiMenu = $(`#opsiMenu_${jumlahOpsiMenu}`).select2(options)
-    // $(`#jumlahOpsiMenu_${jumlahOpsiMenu}`).on('input || change', function (el) {
-    //   var jumlahOpsiMenu = el.target.valueAsNumber
-    //   options.maximumSelectionLength = jumlahOpsiMenu
-    //   opsiMenu.select2(options)
-    //   var selectedOpsiMenu = opsiMenu.find(':selected')
-    //   if (selectedOpsiMenu.length > jumlahOpsiMenu) {
-    //     var allowedMenu = []
-    //     for (let index = 0; index < selectedOpsiMenu.length; index++) {
-    //       const element = selectedOpsiMenu[index];
-    //       var value = $(element).val()
-    //       if (index < jumlahOpsiMenu) allowedMenu.push(value)
-    //     }
-    //     opsiMenu.val(allowedMenu)
-    //     opsiMenu.trigger('change')
-    //   }
-    // })
 
     $(`#kategoriOpsiMenu_${jumlahOpsiMenu}`).on('select2:select', function (e) {
       opsiMenu.empty()
@@ -725,7 +721,7 @@
       <div class="row">
         <div class="col-md-4 mb-3">
           <label for="kategoriOpsiMenu_${jumlahOpsiMenu}">Kategori :</label>
-          <select class="form-control kategori-opsi-menu" id="kategoriOpsiMenu_${jumlahOpsiMenu}" name="" required>
+          <select class="form-control kategori-opsi-menu" name="kategori_opsi_menu[${jumlahOpsiMenu}][]" id="kategoriOpsiMenu_${jumlahOpsiMenu}" name="" required>
             <option></option>
           </select>
         </div>
@@ -761,7 +757,7 @@
             </div>
           </div> --}}
           <label for="opsiMenu_${jumlahOpsiMenu}">Menu</label>
-          <select class="form-control opsi-menu" id="opsiMenu_${jumlahOpsiMenu}" name="opsi_menu[${jumlahOpsiMenu}][]" multiple="multiple" required>
+          <select class="form-control opsi-menu" id="opsiMenu_${jumlahOpsiMenu}" name="opsi_menu[${jumlahOpsiMenu}][]" multiple="multiple">
           </select>
         </div>
       </div>
