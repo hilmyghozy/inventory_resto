@@ -339,7 +339,6 @@ class POS_ProductItemController extends Controller
                 }
             }
         }
-        // return response()->json($request->all());
         DB::table('pos_product_item_type')->whereIn('id_type', $delete_item_types)->delete();
         if ($request->input('opsi_menu')) {
             DB::table('pos_product_item_menu')->where('id_item', $request->id_item)->delete();
@@ -347,9 +346,17 @@ class POS_ProductItemController extends Controller
                 'id_item' => $request->id_item
             ])->delete();
             foreach ($input_opsi_menu as $key => $item) {
+                $jumlah_opsi_menu = $input_jumlah_opsi_menu[$key][0];
+                $kategori_opsi_menu = $input_kategori_opsi_menu[$key][0];
+                $jumlah_menu_kategori = DB::table('pos_product_item')->where('id_kategori', $kategori_opsi_menu)->count();
                 foreach ($item as $id_menu) {
-                    $jumlah_opsi_menu = $input_jumlah_opsi_menu[$key][0];
-                    $kategori_opsi_menu = $input_kategori_opsi_menu[$key][0];
+                    if ($jumlah_menu_kategori == count($item)) {
+                        $paket_item_menu[$id_menu] = [];
+                        $menu_type = DB::table('pos_product_item_type')->where('id_item_type', '!=', null)->where('id_item', $id_menu)->get();
+                        foreach ($menu_type as $type) {
+                            array_push($paket_item_menu[$id_menu], $type->id_type);
+                        }
+                    }
                     $id_pos_product_item_opsi_menu = DB::table('pos_product_item_menu')->insertGetId([
                         'id_item' => $request->id_item,
                         'id_item_paket' => $id_menu,

@@ -4,6 +4,7 @@
 
 @section('style')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.datatables.net/select/1.3.4/css/select.dataTables.min.css">
 <style>
   /* Customize the label (the container) */
   .container-checkbox {
@@ -510,7 +511,7 @@
   }
   function disableBaseHarga () {
     var itemTypes = $('div[class*="row item-type"]')
-    var input = 'input[name="harga"], input[name="pajak"], input[name="harga_thirdparty"], input[name="pajak_thirdparty"]'
+    var input = 'input[name="harga"], input[name="pajak"], input[name="harga_thirdparty"], input[name="pajak_thirdparty"], input[name="harga_jual"], input[name="thirdparty"]'
     $(input).prop('disabled', false)
     if (itemTypes.length > 0) $(input).val(0).prop('disabled', true)
   }
@@ -519,6 +520,7 @@
 
 @if($dataitem[0]->is_paket)
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.3.4/js/dataTables.select.min.js"></script>
 <script type="text/javascript">
   var opsi_menu = {!! $opsi_menu !!}
   var kategori = {!! $datakategori !!}
@@ -644,9 +646,10 @@
     })
   }
   var _selectOpsiMenu
-  function selectOpsiMenu(event) {
+  function selectOpsiMenu(event, jumlahOpsiMenu) {
     _selectOpsiMenu = event
     if (event.checked) {
+      $('div#opsiMenus').prepend(`<input type="hidden" name="opsi_menu[${jumlahOpsiMenu}][]" value="${event.value}" >`)
       $.ajax({
         url: '{{ url("pos/item-type/item/") }}' + `/${event.value}`,
         method: 'GET',
@@ -663,7 +666,29 @@
     } else {
       $(event).parent().parent().parent().find('.opsi_menu_type').html('')
       $(`input[name="paket_item_menu[${event.value}][]"]`).remove()
+      $(`input[name="opsi_menu[${jumlahOpsiMenu}][]"][value="${event.value}"]`).remove()
     }
+  }
+
+  function selectAllOpsiMenu(event, jumlahOpsiMenu) {
+    var checkOpsiMenu = $(`input[type="checkbox"].check-input-${jumlahOpsiMenu}`)
+    var datatable = $(`table.table_opsi_menu_${jumlahOpsiMenu}`).DataTable()
+    checked = event.checked
+    $(`input[name="opsi_menu[${jumlahOpsiMenu}][]"]`).remove()
+    datatable.rows().every( function (rowIdx, tableLoop, rowLoop) {
+      var data = this.data()
+      var checkbox = $(data[0]).children()[0]
+      console.log(checkbox)
+      $(`input[name="paket_item_menu[${checkbox.value}][]"]`).remove()
+      if (checked) {
+        $('div#opsiMenus').prepend(`<input type="hidden" name="opsi_menu[${jumlahOpsiMenu}][]" value="${checkbox.value}" >`)
+      } else {
+        $(`input[name="paket_item_menu[${checkbox.value}][]"]`).remove()
+        $(`input[name="opsi_menu[${jumlahOpsiMenu}][]"]`).remove()
+      }
+    })
+    var rows = datatable.rows({ 'search': 'applied' }).nodes();
+    $('input[type="checkbox"]', rows).prop('checked', event.checked);
   }
 
   function tableOpsiMenu(data, jumlahOpsiMenu, selectedKategori) {
@@ -677,11 +702,14 @@
           menuType = `${menuType} <span class="badge badge-info">${item.nama_item}</span>`
         })
       }
+      if (checked == 'checked') {
+        $('div#opsiMenus').prepend(`<input type="hidden" name="opsi_menu[${jumlahOpsiMenu}][]" value="${value.id_item}" >`)
+      }
       var html = `
         <tr>
           <th scope="row">
             <div class="form-check">
-              <input ${checked} class="form-check-input" type="checkbox" value="${value.id_item}" onChange="selectOpsiMenu(this)" name="opsi_menu[]" />
+              <input ${checked} class="form-check-input check-input-${jumlahOpsiMenu}" type="checkbox" value="${value.id_item}" onChange="selectOpsiMenu(this, ${jumlahOpsiMenu})" />
             </div>
           </th>
           <td>${value.nama_item}</td>
@@ -695,7 +723,12 @@
     }
     $(`.table_opsi_menu_body_${jumlahOpsiMenu}`).html('')
     $(`.table_opsi_menu_body_${jumlahOpsiMenu}`).html(tableMenu)
-    $(`.table_opsi_menu_${jumlahOpsiMenu}`).DataTable();
+    $(`.table_opsi_menu_${jumlahOpsiMenu}`).DataTable({
+      select: true,
+      columnDefs: [
+        { orderable: false, targets: 0 }
+      ]
+    });
   }
 
   function pilihOpsiMenu () {
@@ -730,7 +763,7 @@
           <input type="number" id="jumlahOpsiMenu_${jumlahOpsiMenu}" name="jumlah_opsi_menu[${jumlahOpsiMenu}][]" class="form-control" placeholder="Jumlah Menu" value="${ jumlahMenu > 0 ? jumlahMenu : ''}">
         </div>
         <div class="col-md-12 mb-3">
-          {{-- <div class="accordion" id="accordionExample_${jumlahOpsiMenu}">
+          <div class="accordion" id="accordionExample_${jumlahOpsiMenu}">
             <div class="card">
               <div class="card-header" id="headingOne_${jumlahOpsiMenu}">
                 <h2 class="mb-0">
@@ -744,7 +777,11 @@
                   <table class="table table_opsi_menu_${jumlahOpsiMenu}">
                     <thead>
                       <tr>
-                        <th scope="col">#</th>
+                        <th scope="row">
+                          <div class="form-check">
+                            <input class="form-check-input mt-0" type="checkbox" onChange="selectAllOpsiMenu(this, ${jumlahOpsiMenu})" />
+                          </div>
+                        </th>
                         <th scope="col">Item</th>
                         <th scope="col">Type</th>
                       </tr>
@@ -755,10 +792,10 @@
                 </div>
               </div>
             </div>
-          </div> --}}
-          <label for="opsiMenu_${jumlahOpsiMenu}">Menu</label>
+          </div>
+          {{-- <label for="opsiMenu_${jumlahOpsiMenu}">Menu</label>
           <select class="form-control opsi-menu" id="opsiMenu_${jumlahOpsiMenu}" name="opsi_menu[${jumlahOpsiMenu}][]" multiple="multiple">
-          </select>
+          </select> --}}
         </div>
       </div>
     `

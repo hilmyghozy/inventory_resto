@@ -422,7 +422,7 @@
 
   function disableBaseHarga () {
     var itemTypes = $('div[class*="row item-type"]')
-    var input = 'input[name="harga"], input[name="pajak"], input[name="harga_thirdparty"], input[name="pajak_thirdparty"]'
+    var input = 'input[name="harga"], input[name="pajak"], input[name="harga_thirdparty"], input[name="pajak_thirdparty"], input[name="harga_jual"], input[name="thirdparty"]'
     $(input).prop('disabled', false)
     if (itemTypes.length > 0) $(input).val(0).prop('disabled', true)
   }
