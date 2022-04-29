@@ -718,6 +718,11 @@
       `
       tableMenu = `${tableMenu} ${html}`
     })
+    $.fn.dataTable.ext.order['dom-checkbox'] = function  ( settings, col ) {
+      return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
+        return $('input', td).prop('checked') ? '1' : '0';
+      } );
+    }
     if ($.fn.DataTable.isDataTable( `.table_opsi_menu_${jumlahOpsiMenu}` )) {
       $(`.table_opsi_menu_${jumlahOpsiMenu}`).DataTable().destroy()
     }
@@ -725,8 +730,9 @@
     $(`.table_opsi_menu_body_${jumlahOpsiMenu}`).html(tableMenu)
     $(`.table_opsi_menu_${jumlahOpsiMenu}`).DataTable({
       select: true,
+      order: [[0, 'desc'], [1, 'asc']],
       columnDefs: [
-        { orderable: false, targets: 0 }
+        { orderable: true, targets: 0, orderDataType: 'dom-checkbox' }
       ]
     });
   }
@@ -763,34 +769,30 @@
           <input type="number" id="jumlahOpsiMenu_${jumlahOpsiMenu}" name="jumlah_opsi_menu[${jumlahOpsiMenu}][]" class="form-control" placeholder="Jumlah Menu" value="${ jumlahMenu > 0 ? jumlahMenu : ''}">
         </div>
         <div class="col-md-12 mb-3">
-          <div class="accordion" id="accordionExample_${jumlahOpsiMenu}">
-            <div class="card">
-              <div class="card-header" id="headingOne_${jumlahOpsiMenu}">
-                <h2 class="mb-0">
-                  <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseOne_${jumlahOpsiMenu}" aria-expanded="true" aria-controls="collapseOne_${jumlahOpsiMenu}">
-                    Pilih Opsi Menu
-                  </button>
-                </h2>
-              </div>
-              <div id="collapseOne_${jumlahOpsiMenu}" class="collapse" aria-labelledby="headingOne_${jumlahOpsiMenu}" data-parent="#accordionExample_${jumlahOpsiMenu}">
-                <div class="card-body">
-                  <table class="table table_opsi_menu_${jumlahOpsiMenu}">
-                    <thead>
-                      <tr>
-                        <th scope="row">
-                          <div class="form-check">
-                            <input class="form-check-input mt-0" type="checkbox" onChange="selectAllOpsiMenu(this, ${jumlahOpsiMenu})" />
-                          </div>
-                        </th>
-                        <th scope="col">Item</th>
-                        <th scope="col">Type</th>
-                      </tr>
-                    </thead>
-                    <tbody class="table_opsi_menu_body_${jumlahOpsiMenu}">
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+          <div class="card">
+            <div class="card-header" id="headingOne_${jumlahOpsiMenu}">
+              <h2 class="mb-0">
+                <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseOne_${jumlahOpsiMenu}" aria-expanded="true" aria-controls="collapseOne_${jumlahOpsiMenu}">
+                  Pilih Opsi Menu
+                </button>
+              </h2>
+            </div>
+            <div class="card-body">
+              <table class="table table_opsi_menu_${jumlahOpsiMenu}">
+                <thead>
+                  <tr>
+                    <th scope="row">
+                      <div class="form-check">
+                        <input class="form-check-input mt-0" type="checkbox" onChange="selectAllOpsiMenu(this, ${jumlahOpsiMenu})" />
+                      </div>
+                    </th>
+                    <th scope="col">Item</th>
+                    <th scope="col">Type</th>
+                  </tr>
+                </thead>
+                <tbody class="table_opsi_menu_body_${jumlahOpsiMenu}">
+                </tbody>
+              </table>
             </div>
           </div>
           {{-- <label for="opsiMenu_${jumlahOpsiMenu}">Menu</label>
