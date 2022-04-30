@@ -783,7 +783,7 @@
                   <tr>
                     <th scope="row">
                       <div class="form-check">
-                        <input class="form-check-input mt-0" type="checkbox" onChange="selectAllOpsiMenu(this, ${jumlahOpsiMenu})" />
+                        <input class="form-check-input mt-0" type="checkbox" onChange="selectAllOpsiMenu(this, ${jumlahOpsiMenu})" name="select_all_opsi_menu[${jumlahOpsiMenu}]" />
                       </div>
                     </th>
                     <th scope="col">Item</th>

@@ -32,71 +32,13 @@ class POS_ProductItemController extends Controller
         $page_now =1;
         $url = 'pos-config.product.item';
         $start = 1;
-
-        if($search==null && $pagination ==null){
-            $dataitem = DB::table('pos_product_item')
-                    ->join('pos_product_kategori', 'pos_product_item.id_kategori', '=', 'pos_product_kategori.id_kategori')
-                    ->join('pos_store', 'pos_product_item.id_store', '=', 'pos_store.id_store')
-                    ->select('pos_product_item.*', 'pos_product_kategori.nama_kategori', 'pos_store.nama_store')
-                    ->skip(0)->take($index)->get();;
-            $count = DB::table('pos_product_item')->count();
-            $count = ceil($count/$index);
-        }elseif($search==null&&$pagination!=null){
-            $count = DB::table('pos_product_item')->count();
-            $count = ceil($count/$index);
-            $page_now = $pagination;
-            $dataitem = DB::table('pos_product_item')
-                    ->join('pos_product_kategori', 'pos_product_item.id_kategori', '=', 'pos_product_kategori.id_kategori')
-                    ->join('pos_store', 'pos_product_item.id_store', '=', 'pos_store.id_store')
-                    ->select('pos_product_item.*', 'pos_product_kategori.nama_kategori', 'pos_store.nama_store')
-                    ->skip(($page_now-1)*$index)->take($index)->get();
-            $start = (($page_now-1)*$index)+1;
-        }elseif($search!=null && $pagination ==null){
-            $count = DB::table('pos_product_item')
-                ->join('pos_product_kategori', 'pos_product_item.id_kategori', '=', 'pos_product_kategori.id_kategori')
-                ->join('pos_store', 'pos_product_item.id_store', '=', 'pos_store.id_store')
-                ->select('pos_product_item.*', 'pos_product_kategori.nama_kategori', 'pos_store.nama_store')
-                ->where('nama_item', 'like', $search.'%')
-                ->orWhere('pos_product_kategori.nama_kategori', 'like', '%'.$search.'%')
-                ->orWhere('pos_store.nama_store', 'like', '%'.$search.'%')
-                ->count();
-            $count = ceil($count/$index);
-            $page_now = 1;
-            $dataitem = DB::table('pos_product_item')
-                ->join('pos_product_kategori', 'pos_product_item.id_kategori', '=', 'pos_product_kategori.id_kategori')
-                ->join('pos_store', 'pos_product_item.id_store', '=', 'pos_store.id_store')
-                ->select('pos_product_item.*', 'pos_product_kategori.nama_kategori', 'pos_store.nama_store')
-                ->where('nama_item', 'like', $search.'%')
-                ->orWhere('pos_product_kategori.nama_kategori', 'like', '%'.$search.'%')
-                ->orWhere('pos_store.nama_store', 'like', '%'.$search.'%')
-                ->skip(($page_now-1)*$index)->take($index)
-                ->get();
-            $start = 1;
-        }else{
-            $count = DB::table('pos_product_item')
-                ->join('pos_product_kategori', 'pos_product_item.id_kategori', '=', 'pos_product_kategori.id_kategori')
-                ->join('pos_store', 'pos_product_item.id_store', '=', 'pos_store.id_store')
-                ->select('pos_product_item.*', 'pos_product_kategori.nama_kategori', 'pos_store.nama_store')
-                ->where('nama_item', 'like', $search.'%')
-                ->orWhere('pos_product_kategori.nama_kategori', 'like', '%'.$search.'%')
-                ->orWhere('pos_store.nama_store', 'like', '%'.$search.'%')
-                ->count();
-            $count = ceil($count/$index);
-            
-            $page_now = $pagination;
-            $dataitem = DB::table('pos_product_item')
-                ->join('pos_product_kategori', 'pos_product_item.id_kategori', '=', 'pos_product_kategori.id_kategori')
-                ->join('pos_store', 'pos_product_item.id_store', '=', 'pos_store.id_store')
-                ->select('pos_product_item.*', 'pos_product_kategori.nama_kategori', 'pos_store.nama_store')
-                ->where('nama_item', 'like', '%'.$search.'%')
-                ->orWhere('pos_product_kategori.nama_kategori', 'like', '%'.$search.'%')
-                ->orWhere('pos_store.nama_store', 'like', '%'.$search.'%')
-                ->skip(($page_now-1)*$index)->take($index)
-                ->get();
-            
-            $start = (($page_now-1)*$index)+1;
-        }
-
+        $dataitem = DB::table('pos_product_item')
+            ->join('pos_product_kategori', 'pos_product_item.id_kategori', '=', 'pos_product_kategori.id_kategori')
+            ->join('pos_store', 'pos_product_item.id_store', '=', 'pos_store.id_store')
+            ->select('pos_product_item.*', 'pos_product_kategori.nama_kategori', 'pos_store.nama_store')
+            ->get();
+        $count = count($dataitem);
+        
         // return $count;
 
         return view($url, compact ('dataitem', 'datastore', 'datakategori', 'page_now', 'search', 'count', 'start'));
@@ -287,6 +229,7 @@ class POS_ProductItemController extends Controller
         $input_jumlah_opsi_menu = $request->input('jumlah_opsi_menu') ?: [];
         $input_kategori_opsi_menu = $request->input('kategori_opsi_menu') ?: [];
         $paket_item_menu = $request->input('paket_item_menu') ?: [];
+        $select_all_opsi_menu = $request->input('select_all_opsi_menu') ?: [];
         
         $delete_item_types = $request->input('delete_item_types') ?: [];
         $item_type_id = $request->input('item_type_id') ?: [];
@@ -350,7 +293,7 @@ class POS_ProductItemController extends Controller
                 $kategori_opsi_menu = $input_kategori_opsi_menu[$key][0];
                 $jumlah_menu_kategori = DB::table('pos_product_item')->where('id_kategori', $kategori_opsi_menu)->count();
                 foreach ($item as $id_menu) {
-                    if ($jumlah_menu_kategori == count($item)) {
+                    if (isset($select_all_opsi_menu[$key])) {
                         $paket_item_menu[$id_menu] = [];
                         $menu_type = DB::table('pos_product_item_type')->where('id_item_type', '!=', null)->where('id_item', $id_menu)->get();
                         foreach ($menu_type as $type) {

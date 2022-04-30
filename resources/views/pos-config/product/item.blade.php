@@ -106,22 +106,9 @@
                     <div class="row">
                         <div class="col-12">
                           <div class="card">
-                            <div class="card-header">
-                              <h4></h4>
-                              <div class="card-header-form">
-                                <form action="{{ url('pos/item') }}" action="get">
-                                  <div class="input-group">
-                                    <input type="text" class="form-control" name="search" value="{{ ($search) }}" placeholder="Search">
-                                    <div class="input-group-btn">
-                                      <button class="btn btn-primary h-100" id="id-btn-search"><i class="fas fa-search"></i></button>
-                                    </div>
-                                  </div>
-                                </form>
-                              </div>
-                            </div>
-                            <div class="card-body p-0">
+                            <div class="card-body">
                               <div class="table-responsive">
-                                <table id="pos_store" class="table table-hover text-center" >
+                                <table id="pos_store" class="table table-hover text-center w-full" >
                                     <thead>
                                         <tr>
                                             <th>No</th>
@@ -170,27 +157,6 @@
                           </div>
                         </div>
                       </div>
-                    <div class="card-footer">
-                        <div class="row">
-                            <div class="col-lg-6">
-                              <nav class="d-inline-block">
-                                <ul class="pagination mb-0">
-                                  <li class="page-item mr-3 {{ $page_now==1 ? 'disabled' : '' }}">
-                                    <a class="page-link" href="{{ url('pos/item?search='.$search.'&pagination='.($page_now-1)) }}" tabindex="-1"><i class="fas fa-chevron-left"></i></a>
-                                  </li>
-                                  @for ($i = 1; $i <= $count; $i++)
-                                    <li class="page-item {{ $i==$page_now ? 'active' : '' }}">
-                                      <a class="page-link" href="{{ url('pos/item?search='.$search.'&pagination='.$i) }}">{{ $i }}</a>
-                                    </li>
-                                  @endfor
-                                  <li class="ml-3 page-item {{ $page_now==$count ? 'disabled' : '' }}">
-                                    <a class="page-link" href="{{ url('pos/item?search='.$search.'&pagination='.($page_now+1)) }}"><i class="fas fa-chevron-right"></i></a>
-                                  </li>
-                                </ul>
-                              </nav>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -208,7 +174,9 @@
   var pajaktp = 0;
   var third = 0;
   var total = 0;
-  
+  $(document).ready(function () {
+    $('#pos_store').DataTable()
+  })
   updateTotal();
 
   const inHarga = document.getElementById('validationDefault05');
